@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(nvidia-smi:*)",
+      "Bash(wmic path win32_videocontroller get:*)",
+      "Bash(wsl --list:*)",
+      "Bash(wsl -e bash -c:*)",
+      "Bash(git -C /c/Users/dmsdu/ColBERT log --oneline -20)",
+      "Bash(git -C /c/Users/dmsdu/ColBERT log --oneline --all)",
+      "Bash(git -C /c/Users/dmsdu/ColBERT log --format=\"%h %s\")",
+      "Bash(git -C /c/Users/dmsdu/ColBERT show:*)",
+      "Bash(wc:*)",
+      "WebFetch(domain:aclanthology.org)",
+      "WebFetch(domain:arxiv.org)",
+      "Bash(wsl bash -c \"source ~/colbert-env/bin/activate && pip uninstall faiss-gpu-cu12 -y && pip install faiss-gpu-cu12 2>&1 | tail -5 && python -c ''import faiss; print\\(\"\"GPU count:\"\", faiss.get_num_gpus\\(\\)\\)''\")",
+      "Bash(wsl bash -c \"cd /mnt/c/Users/dmsdu/ColBERT && source ~/colbert-env/bin/activate && python run_overnight.py step5a\")",
+      "Bash(wsl bash -c \"date ''+%H:%M:%S'' && ls ~/ColBERT/experiments/msmarco/indexes/subset.quantized/ 2>&1\")",
+      "Bash(wsl bash -c \"ps aux | grep python | grep -v grep | grep -v unattended | head -5\")",
+      "Bash(wsl bash -c \"nvidia-smi 2>/dev/null | head -20\")",
+      "Bash(wsl bash -c \"while [ ! -f ~/ColBERT/experiments/msmarco/indexes/subset.quantized/centroids.pt ]; do sleep 10; done; date ''+%H:%M:%S''; echo ''k-means 완료!''; ls -lhrt ~/ColBERT/experiments/msmarco/indexes/subset.quantized/\")",
+      "Bash(wsl bash -c \"cd /mnt/c/Users/dmsdu/ColBERT && python -c \"\":*)"
+    ]
+  }
+}

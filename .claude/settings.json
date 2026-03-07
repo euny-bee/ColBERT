@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wsl bash -c \"ps aux | grep python | grep -v grep | grep -v unattended\")",
+      "Bash(wsl bash -c \"ls -lhrt ~/ColBERT/experiments/msmarco/indexes/subset.quantized/ 2>/dev/null | tail -20\")",
+      "Bash(wsl bash -c \"cat ~/ColBERT/experiments/msmarco/indexes/subset.quantized/plan.json\")",
+      "Bash(wsl bash -c \"ls -lhrt ~/ColBERT/experiments/msmarco/indexes/subset.quantized/ 2>/dev/null\")",
+      "Bash(wsl bash -c \"ps -p 697 -o pid,stat,%cpu,%mem,cputime 2>/dev/null\")",
+      "Bash(wsl bash -c \"source ~/colbert-env/bin/activate && python -c ''import faiss; print\\(\"\"GPU count:\"\", faiss.get_num_gpus\\(\\)\\)'' 2>&1\")",
+      "Bash(wsl bash -c \"kill 697 665 688 689 2>/dev/null; sleep 1; ps aux | grep run_overnight | grep -v grep\")",
+      "Bash(wsl bash -c \"source ~/colbert-env/bin/activate && pip install faiss-gpu 2>&1 | tail -20\")",
+      "Bash(wsl bash -c \"source ~/colbert-env/bin/activate && python --version && pip install faiss-gpu-cu12 2>&1 | tail -10\")",
+      "Bash(wsl bash -c \"source ~/colbert-env/bin/activate && python -c ''import faiss; print\\(\"\"GPU count:\"\", faiss.get_num_gpus\\(\\)\\)''\")",
+      "Bash(wsl bash -c \"source ~/colbert-env/bin/activate && pip list | grep faiss\")",
+      "Bash(wsl bash -c \"source ~/colbert-env/bin/activate && pip uninstall faiss-cpu -y 2>&1 && python -c ''import faiss; print\\(\"\"GPU count:\"\", faiss.get_num_gpus\\(\\)\\)''\")",
+      "WebFetch(domain:ar5iv.labs.arxiv.org)",
+      "Read(//mnt/c/Users/dmsdu/ColBERT/**)",
+      "Bash(ls -la /c/Users/dmsdu/ColBERT/*.txt /c/Users/dmsdu/ColBERT/*.cfg)",
+      "Bash(xargs grep -l \"beir\\\\|BEIR\")",
+      "Bash(xargs grep -l \"colbertv2\\\\|colbert-ir\")",
+      "Bash(xargs grep -l \"class.*Searcher\")",
+      "Bash(xargs grep -l \"BEIR\\\\|beir\")",
+      "Bash(xargs grep -l \"nbits\")",
+      "Bash(xargs grep -l \"def load_collection\")",
+      "Bash(xargs grep -l \"from_existing\\\\|load_from_checkpoint\")",
+      "Read(//c/Users/dmsdu/**)",
+      "Bash(pip show faiss-cpu faiss-gpu)",
+      "Bash(source ~/colbert-env/bin/activate)",
+      "Bash(pip install beir pytrec_eval-terrier)",
+      "WebFetch(domain:www.anaconda.com)"
+    ]
+  }
+}

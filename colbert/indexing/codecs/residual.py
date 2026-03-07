@@ -176,7 +176,7 @@ class ResidualCodec:
             residuals_ = (batch - centroids_)
 
             codes.append(codes_.cpu())
-            residuals.append(self.binarize(residuals_).cpu())
+            residuals.append(residuals_.half().cpu())  # ANALOG: float16
 
         codes = torch.cat(codes)
         residuals = torch.cat(residuals)
@@ -239,7 +239,7 @@ class ResidualCodec:
     #@profile
     def decompress(self, compressed_embs: Embeddings):
         """
-            We batch below even if the target device is CUDA to avoid large temporary buffers causing OOM.
+            ANALOG: Add float16 residuals directly to centroids (no bit unpacking).
         """
 
         codes, residuals = compressed_embs.codes, compressed_embs.residuals
@@ -247,25 +247,12 @@ class ResidualCodec:
         D = []
         for codes_, residuals_ in zip(codes.split(1 << 15), residuals.split(1 << 15)):
             if self.use_gpu:
-                codes_, residuals_ = codes_.cuda(), residuals_.cuda()
-                centroids_ = ResidualCodec.decompress_residuals(
-                    residuals_,
-                    self.bucket_weights,
-                    self.reversed_bit_map,
-                    self.decompression_lookup_table,
-                    codes_,
-                    self.centroids,
-                    self.dim,
-                    self.nbits,
-                ).cuda()
+                codes_ = codes_.cuda()
+                residuals_ = residuals_.cuda().half()
             else:
-                # TODO: Remove dead code
-                centroids_ = self.lookup_centroids(codes_, out_device='cpu')
-                residuals_ = self.reversed_bit_map[residuals_.long()]
-                residuals_ = self.decompression_lookup_table[residuals_.long()]
-                residuals_ = residuals_.reshape(residuals_.shape[0], -1)
-                residuals_ = self.bucket_weights[residuals_.long()]
-                centroids_.add_(residuals_)
+                residuals_ = residuals_.float()
+            centroids_ = self.lookup_centroids(codes_, out_device=codes_.device)
+            centroids_ = centroids_ + residuals_
 
             if self.use_gpu:
                 D_ = torch.nn.functional.normalize(centroids_, p=2, dim=-1).half()
