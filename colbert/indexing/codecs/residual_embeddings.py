@@ -17,8 +17,7 @@ class ResidualEmbeddings:
         # assert isinstance(residuals, bitarray), type(residuals)
         assert codes.size(0) == residuals.size(0), (codes.size(), residuals.size())
         assert codes.dim() == 1 and residuals.dim() == 2, (codes.size(), residuals.size())
-        # ANALOG: accept float16 residuals too
-        # assert residuals.dtype == torch.uint8
+        assert residuals.dtype == torch.uint8
 
         self.codes = codes.to(torch.int32)  # (num_embeddings,) int32
         self.residuals = residuals   # (num_embeddings, compressed_dim) uint8
@@ -57,7 +56,7 @@ class ResidualEmbeddings:
             print_message("#> Loading codes and residuals...")
 
             codes = torch.empty(num_embeddings, dtype=torch.int32)
-            residuals = torch.empty(num_embeddings, dim, dtype=torch.float16)  # ANALOG: full-dim float16
+            residuals = torch.empty(num_embeddings, dim // 8 * nbits, dtype=torch.uint8)
 
             codes_offset = 0
 

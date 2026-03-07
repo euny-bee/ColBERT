@@ -395,6 +395,52 @@ def _step5a_subset_quantized():
     save_result("subset_quantized", metrics)
 
 
+def _step5a_1bit():
+    """Index + search + eval the subset with 1-bit quantized residuals."""
+    os.chdir(COLBERT_DIR)
+    from colbert import Indexer, Searcher
+    from colbert.infra import Run, RunConfig, ColBERTConfig
+    from colbert.data import Queries
+
+    ranking_dir = os.path.join(RESULTS_DIR, "rankings")
+    os.makedirs(ranking_dir, exist_ok=True)
+
+    with Run().context(RunConfig(nranks=1, experiment="msmarco")):
+        config = ColBERTConfig(
+            nbits=1, doc_maxlen=220, query_maxlen=32,
+            bsize=16, index_bsize=32,
+            avoid_fork_if_possible=True,
+        )
+
+        log("Indexing subset with 1-bit quantized residuals...")
+        start = time.time()
+        indexer = Indexer(checkpoint="colbert-ir/colbertv2.0", config=config)
+        indexer.index(
+            name="subset.1bit",
+            collection=SUBSET_COLLECTION,
+            overwrite=True,
+        )
+        log(f"Subset 1-bit indexing done in {time.time()-start:.0f}s")
+
+        log("Searching subset 1-bit index...")
+        searcher = Searcher(index="subset.1bit", config=config)
+        queries = Queries(QUERIES_PATH)
+
+        start = time.time()
+        ranking = searcher.search_all(queries, k=1000)
+        log(f"Search done in {time.time()-start:.0f}s")
+
+        ranking_path = os.path.join(ranking_dir, "subset_1bit.ranking.tsv")
+        for ext in ['', '.meta']:
+            p = ranking_path + ext
+            if os.path.exists(p):
+                os.remove(p)
+        ranking.save(ranking_path)
+
+    metrics = run_eval(ranking_path, SUBSET_QRELS)
+    save_result("subset_1bit", metrics)
+
+
 def _step5b_subset_analog():
     """Index the subset with analog (float16) residuals (indexing only)."""
     os.chdir(COLBERT_DIR)
@@ -623,6 +669,7 @@ if __name__ == '__main__':
         dispatch = {
             "step3": _step3_search_full_quantized,
             "step5a": _step5a_subset_quantized,
+            "step5a_1bit": _step5a_1bit,
             "step5b": _step5b_subset_analog,
             "step5b_search": lambda: _step5b_search_analog(k=1000),
             "step5b_search100": lambda: _step5b_search_analog(k=100),

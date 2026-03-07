@@ -27,7 +27,10 @@
       "Bash(pip show faiss-cpu faiss-gpu)",
       "Bash(source ~/colbert-env/bin/activate)",
       "Bash(pip install beir pytrec_eval-terrier)",
-      "WebFetch(domain:www.anaconda.com)"
+      "WebFetch(domain:www.anaconda.com)",
+      "Read(//mnt/c/Users/**)",
+      "Bash(ls -lt /mnt/c/Users/dmsdu/ColBERT/*.md)",
+      "Bash(ls -lt /mnt/c/Users/dmsdu/*.md)"
     ]
   }
 }
