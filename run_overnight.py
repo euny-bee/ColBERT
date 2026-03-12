@@ -499,6 +499,24 @@ def _step5b_search_analog(k=1000):
     save_result("subset_analog", metrics)
 
 
+def _verify_analog():
+    """Apply analog patches and re-search the existing analog index to verify results."""
+    backup_files()
+    try:
+        apply_analog_patches()
+        rc = subprocess.run(
+            [sys.executable, os.path.abspath(__file__), "step5b_search"],
+            cwd=COLBERT_DIR
+        ).returncode
+        if rc != 0:
+            log(f"Analog verification search failed (rc={rc})")
+    except Exception as e:
+        log(f"Analog verification error: {e}")
+        traceback.print_exc()
+    finally:
+        restore_files()
+
+
 def _step6_compare():
     """Print final comparison table."""
     results = {}
@@ -674,6 +692,7 @@ if __name__ == '__main__':
             "step5b_search": lambda: _step5b_search_analog(k=1000),
             "step5b_search100": lambda: _step5b_search_analog(k=100),
             "step6": _step6_compare,
+            "verify_analog": _verify_analog,
         }
         if step in dispatch:
             try:
