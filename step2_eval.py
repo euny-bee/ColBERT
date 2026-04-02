@@ -119,7 +119,7 @@ def _search(index_name, ranking_path, analog=False):
     torch.cuda.empty_cache()
 
     with Run().context(RunConfig(nranks=1, experiment="msmarco")):
-        config  = ColBERTConfig(nbits=2, doc_maxlen=220, query_maxlen=32)
+        config  = ColBERTConfig(nbits=2, doc_maxlen=220, query_maxlen=32, ncells=2, ndocs=8192)
         searcher = Searcher(index=index_name, config=config)
         queries  = Queries(QUERIES)
 

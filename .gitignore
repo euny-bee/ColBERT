@@ -4,7 +4,12 @@
 /logs/
 /mlruns/
 /profiler/
-/logs/
+
+# 실험 로그 파일
+*.log
+*.csv
+*.xlsx
+*.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
