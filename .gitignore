@@ -10,6 +10,7 @@
 *.csv
 *.xlsx
 *.png
+*.claude
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
