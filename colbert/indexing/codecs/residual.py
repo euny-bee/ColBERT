@@ -99,37 +99,61 @@ class ResidualCodec:
         if hasattr(cls, "loaded_extensions") or not use_gpu:
             return
 
-        print_message(f"Loading decompress_residuals_cpp extension (set COLBERT_LOAD_TORCH_EXTENSION_VERBOSE=True for more info)...")
-        decompress_residuals_cpp = load(
-            name="decompress_residuals_cpp",
-            sources=[
-                os.path.join(
-                    pathlib.Path(__file__).parent.resolve(), "decompress_residuals.cpp"
-                ),
-                os.path.join(
-                    pathlib.Path(__file__).parent.resolve(), "decompress_residuals.cu"
-                ),
-            ],
-            verbose=os.getenv("COLBERT_LOAD_TORCH_EXTENSION_VERBOSE", "False") == "True",
-        )
-        cls.decompress_residuals = decompress_residuals_cpp.decompress_residuals_cpp
+        try:
+            print_message(f"Loading decompress_residuals_cpp extension (set COLBERT_LOAD_TORCH_EXTENSION_VERBOSE=True for more info)...")
+            decompress_residuals_cpp = load(
+                name="decompress_residuals_cpp",
+                sources=[
+                    os.path.join(
+                        pathlib.Path(__file__).parent.resolve(), "decompress_residuals.cpp"
+                    ),
+                    os.path.join(
+                        pathlib.Path(__file__).parent.resolve(), "decompress_residuals.cu"
+                    ),
+                ],
+                verbose=os.getenv("COLBERT_LOAD_TORCH_EXTENSION_VERBOSE", "False") == "True",
+            )
+            cls.decompress_residuals = decompress_residuals_cpp.decompress_residuals_cpp
 
-        print_message(f"Loading packbits_cpp extension (set COLBERT_LOAD_TORCH_EXTENSION_VERBOSE=True for more info)...")
-        packbits_cpp = load(
-            name="packbits_cpp",
-            sources=[
-                os.path.join(
-                    pathlib.Path(__file__).parent.resolve(), "packbits.cpp"
-                ),
-                os.path.join(
-                    pathlib.Path(__file__).parent.resolve(), "packbits.cu"
-                ),
-            ],
-            verbose=os.getenv("COLBERT_LOAD_TORCH_EXTENSION_VERBOSE", "False") == "True",
-        )
-        cls.packbits = packbits_cpp.packbits_cpp
+            print_message(f"Loading packbits_cpp extension (set COLBERT_LOAD_TORCH_EXTENSION_VERBOSE=True for more info)...")
+            packbits_cpp = load(
+                name="packbits_cpp",
+                sources=[
+                    os.path.join(
+                        pathlib.Path(__file__).parent.resolve(), "packbits.cpp"
+                    ),
+                    os.path.join(
+                        pathlib.Path(__file__).parent.resolve(), "packbits.cu"
+                    ),
+                ],
+                verbose=os.getenv("COLBERT_LOAD_TORCH_EXTENSION_VERBOSE", "False") == "True",
+            )
+            cls.packbits = packbits_cpp.packbits_cpp
 
-        cls.loaded_extensions = True
+            cls.loaded_extensions = True
+        except Exception as e:
+            print_message(f"Warning: Could not load CUDA extensions ({e}). Falling back to Python implementation.")
+
+            def _python_packbits(flat_tensor):
+                import numpy as np
+                packed = np.packbits(np.asarray(flat_tensor.cpu(), dtype=np.uint8))
+                return torch.as_tensor(packed, dtype=torch.uint8)
+
+            def _python_decompress_residuals(residuals, bucket_weights, reversed_bit_map,
+                                             decompression_lookup_table, codes, centroids, dim, nbits):
+                # Replicate the CPU path in decompress()
+                device = codes.device
+                centroids_ = centroids[codes.long()].to(device=device).float()
+                residuals_ = reversed_bit_map[residuals.long()]
+                residuals_ = decompression_lookup_table[residuals_.long()]
+                residuals_ = residuals_.reshape(residuals_.shape[0], -1)
+                residuals_ = bucket_weights[residuals_.long()]
+                centroids_.add_(residuals_)
+                return centroids_
+
+            cls.packbits = staticmethod(_python_packbits)
+            cls.decompress_residuals = staticmethod(_python_decompress_residuals)
+            cls.loaded_extensions = True
 
     @classmethod
     def load(cls, index_path):
