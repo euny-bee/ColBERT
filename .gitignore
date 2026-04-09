@@ -27,3 +27,4 @@ __pycache__/
 # Other
 .vscode
 *.tsv
+.claude/settings.local.json
