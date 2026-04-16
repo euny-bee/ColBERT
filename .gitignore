@@ -28,3 +28,4 @@ __pycache__/
 .vscode
 *.tsv
 .claude/settings.local.json
+emb_cache/
