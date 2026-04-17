@@ -1,7 +1,7 @@
 # 768-dim float32 → 128-dim float16 벡터 손실 분석
 
 > Branch: `experiment/768-32to128-16`
-> 최종 업데이트: 2026-04-16
+> 최종 업데이트: 2026-04-17
 
 ---
 
@@ -124,11 +124,40 @@ BERT encoder 출력 **(768-dim, float32)** 이 ColBERT에서 **(128-dim, float16
 
 ---
 
+## 현재 실험 설계의 한계 (2026-04-17 검토)
+
+### 문제 1: A가 다른 모델
+- 현재 A = `msmarco-bert-base-dot-v5` (별개 모델)
+- B/C = `colbertv2.0` BERT encoder
+- **순수한 차원/precision 압축 손실을 측정하려면 같은 모델에서 A/B/C를 모두 추출해야 함**
+- 올바른 설계: colbertv2.0 BERT encoder에서 linear projection 전 = A(768 f32), 후 = B(128 f32), B.half() = C
+
+> phase1_vector_analysis.py는 이미 이 방식으로 올바르게 구현되어 있음.
+> phase2_retrieval_comparison.py만 수정 필요.
+
+### 문제 2: Pooling 방식 불일치
+- 현재 A = CLS 토큰 단일 벡터
+- 현재 B/C = mean pooling (전체 토큰 평균)
+- 압축 손실 외에 pooling 방식 차이도 성능에 영향
+
+### 문제 3: MaxSim 미사용
+- 실제 ColBERT는 토큰별 벡터를 유지해 MaxSim으로 검색
+- 현재는 단일 벡터 dot product로 검색 → B/C 성능이 실제 ColBERT보다 낮게 측정됨
+- A(768-dim)를 MaxSim으로 하려면 171k × 100 tokens × 768 × 4bytes ≈ **52GB** 필요 → 불가
+- B/C(128-dim)를 MaxSim으로 하면: 171k × 100 × 128 × 2bytes ≈ **4.4GB** → 가능
+- 단, A와 MaxSim으로 직접 비교는 메모리 한계상 어려움
+
+### 다음 단계 옵션
+1. **phase2 A를 colbertv2.0 CLS 768-dim으로 교체** — 같은 모델에서 압축 손실만 측정
+2. **B/C만 MaxSim으로 재측정** — 실제 ColBERT 성능 확인 (A와 직접 비교는 불가)
+
+---
+
 ## 주요 결론
 
 1. **float32 → float16은 손실 없음**: MSE ~3e-10, cosine sim = 1.0000, Spearman B vs C = 1.000
 2. **768 → 128 차원 축소가 실질적 손실 원인**: nDCG@10 -0.26, top-10 overlap 2.34/10
-3. **단, mean pooling 방식 한계 있음**: ColBERT는 본래 MaxSim 방식이므로 B/C 성능이 실제보다 낮게 측정됨
+3. **단, 현재 phase2는 A가 다른 모델 + pooling 방식 불일치로 순수 압축 손실 측정이 아님**
 4. **쿼리마다 손실 편차 크다**: 최대 -0.87 ~ +0.15 범위
 
 ---
