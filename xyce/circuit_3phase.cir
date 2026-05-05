@@ -1,0 +1,53 @@
+* ============================================================
+* 3T1C 3-Phase Simulation (Data store → Compensation → Read)
+*
+* Phase 1  0~100ns : V1=3, V2=3,  V3=3,  V4=0, V5=-3  (data store)
+* Phase 2 100~200ns: V1=0, V2=-3, V3=3,  V4=0, V5=-3  (compensation)
+* Phase 3 200~400ns: V1=0, V2=3,  V3=-3, V4=3, V5=3   (read / L2)
+*
+* Subcircuit port order: drain gate source
+*   XM2  v1n  v2n  mid   (drain=V1, gate=V2, source=mid)
+*   XM1  mid  v3n  sn    (drain=mid, gate=V3, source=SN)
+*   XM0  mid  sn   v5s   (drain=mid, gate=SN, source=V5)
+*   C1   sn   v4n        (storage cap, SN to V4)
+* ============================================================
+
+.TITLE 3T1C 3-Phase
+
+.INCLUDE igzo_smooth.sub
+
+* ── Voltage sources (PWL) ─────────────────────────────────
+VV1  v1n  0  PWL(0 3  100n 3  100.5n 0   400n 0)
+VV2  v2n  0  PWL(0 3  100n 3  100.5n -3  200n -3  200.5n 3  400n 3)
+VV3  v3n  0  PWL(0 3  200n 3  200.5n -3  400n -3)
+VV4  v4n  0  PWL(0 0  200n 0  200.5n 3   400n 3)
+
+* V5 with 0V sense source for I(M0) measurement
+VV5   v5raw  0    PWL(0 -3  200n -3  200.5n 3  400n 3)
+VM0s  v5raw  v5s  DC 0
+
+* ── Storage capacitor: SN ↔ V4 ────────────────────────────
+C1  sn  v4n  100f  IC=0
+
+* ── Transistors ───────────────────────────────────────────
+XM2  v1n  v2n  mid  IGZO_SMOOTH
+XM1  mid  v3n  sn   IGZO_SMOOTH
+XM0  mid  sn   v5s  IGZO_SMOOTH
+
+* ── Numerical stability ────────────────────────────────────
+RBLEED  sn   0  10G
+RMID    mid  0  10G
+CMID    mid  0  1f
+CSN     sn   0  1f
+
+* ── Initial conditions & solver ───────────────────────────
+.IC  V(sn)=0  V(mid)=0
+
+.OPTIONS TIMEINT METHOD=TRAP ABSTOL=1e-13 RELTOL=1e-3
+.OPTIONS DEVICE GMIN=1e-15
+
+.TRAN 0.5n 400n UIC
+
+.PRINT TRAN FORMAT=CSV  TIME  V(sn)  V(mid)  I(VM0s)
+
+.END

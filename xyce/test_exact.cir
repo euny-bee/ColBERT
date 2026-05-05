@@ -1,0 +1,23 @@
+* ============================================================
+* Xyce Test Netlist — IGZO TFT Exact 4-Region Model
+* DC sweep: Vgs -3V to 5V, Vds = 0.5V
+* ============================================================
+
+.TITLE IGZO Exact Transfer Curve
+
+.INCLUDE igzo_exact.sub
+
+* Power supplies
+VGS  gate  0  DC 0
+VDS  drain 0  DC 0.5
+
+* Device under test: drain gate source
+XIGZO  drain  gate  0  IGZO_EXACT
+
+* DC sweep Vgs from -3 to 5V in 0.06V steps
+.DC VGS -3 5 0.06
+
+* Output: Ids = current through VDS (sign convention: into drain)
+.PRINT DC FORMAT=CSV  V(gate) I(VDS)
+
+.END

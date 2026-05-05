@@ -1,0 +1,96 @@
+* ============================================================
+* 3T1C IGZO TFT Circuit — Xyce Transient Simulation
+* Using smooth logistic behavioral model
+*
+* Topology:
+*                         GND (0V)
+*                           |
+*                    gate=Vread
+*                    [M2: select]       drain=mid
+*                           |
+*            mid node ──────┤──── (drain M0)
+*                           │         |
+*            Vcomp──gate    │     gate=SN   [M0: drive]
+*                 [M1: write]│         |
+*               drain=mid   │      drain=VDD
+*               source=SN   │
+*                           SN ─── gate M0 (already listed above)
+*                           |
+*                         C1 (100fF)
+*                           |
+*                          V1 (input)
+*
+* Port order for IGZO_SMOOTH subcircuit: drain  gate  source
+*   XM0  vdd  sn   mid   IGZO_SMOOTH   (drive:  VDD→mid, gated by SN)
+*   XM1  mid  vcomp sn   IGZO_SMOOTH   (write:  mid↔SN, gated by Vcomp)
+*   XM2  mid  vread 0    IGZO_SMOOTH   (select: mid→GND, gated by Vread)
+*
+* NOTE: Model fitted at VDS=0.5V only — Ids vs Vgs characteristic.
+*       VDS dependence (output resistance) is NOT captured.
+*       Qualitative switching behavior is preserved.
+*
+* ── Simulation phases ──────────────────────────────────────
+*  0   ~ 100ns : WRITE   Vcomp=5V, Vread=0V, V1=0V
+*                        M1 ON → SN=mid → charges to VDD via M0
+*                        (M0 barely on, Vgs≈0; M2 off → no discharge)
+*
+*  100ns        : Vcomp→0V (M1 OFF, SN floats)
+*                 V1 steps 0→2V  →  V(SN) shifts +2V by cap coupling
+*
+*  100 ~ 200ns  : HOLD    Vcomp=0, Vread=0
+*                         SN floats at ≈2V; mid charges via M0 (Vgs≈2V)
+*
+*  200 ~ 400ns  : READ    Vread=5V (M2 ON as load)
+*                         M0(gate=SN≈2V) drives current through M2→GND
+*                         V(mid) settles; I(VVDD) = output drive current
+* ============================================================
+
+.TITLE 3T1C IGZO TFT — Write / Hold / Read
+
+.INCLUDE igzo_smooth.sub
+
+* ── Power supply ──────────────────────────────────────────
+VVDD  vdd  0  DC 5.0
+
+* ── Input & control signals ───────────────────────────────
+* V1: input stepped from 0 → 2V at t=100ns (capacitive coupling to SN)
+VV1   v1n  0  PWL(0 0  100n 0  100.5n 2.0  400n 2.0)
+
+* Vcomp: write enable (high 0~100ns, then off)
+VCOMP  vcomp  0  PWL(0 5.0  100n 5.0  100.5n 0  400n 0)
+
+* Vread: read enable (off until 200ns, then high)
+VREAD  vread  0  PWL(0 0  200n 0  200.5n 5.0  400n 5.0)
+
+* ── Storage capacitor ─────────────────────────────────────
+* IC=0 → V(sn)-V(v1n)=0 at t=0 → V(sn)=0V since V1 starts at 0V
+C1  sn  v1n  100f  IC=0
+
+* ── Transistors (drain  gate  source) ─────────────────────
+XM0  vdd    sn     mid   IGZO_SMOOTH   ; drive:  VDD → mid
+XM1  mid    vcomp  sn    IGZO_SMOOTH   ; write:  mid ↔ SN
+XM2  mid    vread  0     IGZO_SMOOTH   ; select: mid → GND
+
+* ── Bleed resistors: DC path for floating nodes ───────────
+RBLEED  sn   0  10G
+RMID    mid  0  10G
+
+* ── Small shunt caps: stabilize transient Newton iterations ─
+CMID  mid  0  1f
+CSN   sn   0  1f
+
+* ── Initial conditions ────────────────────────────────────
+.IC  V(sn)=0  V(mid)=0
+
+* ── Solver options ────────────────────────────────────────
+.OPTIONS TIMEINT METHOD=TRAP ABSTOL=1e-13 RELTOL=1e-3
+.OPTIONS NONLIN MAXSTEPS=200
+.OPTIONS DEVICE GMIN=1e-15
+
+* ── Transient analysis ────────────────────────────────────
+.TRAN 0.5n 400n UIC
+
+* ── Output columns: time, V(SN), V(mid), VDD supply current ──
+.PRINT TRAN FORMAT=CSV  TIME  V(sn)  V(mid)  I(VVDD)
+
+.END

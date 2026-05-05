@@ -1,0 +1,52 @@
+* ============================================================
+* IGZO TFT Behavioral Subcircuit — Exact 4-Region Model
+* Fit from igzo_measure.csv  (VDS=0.5V fixed measurement)
+*
+* Region boundaries (auto-detected from data):
+*   V1   = -0.2361 V  OFF -> Subthreshold
+*   V2   =  0.0294 V  Subthreshold -> ON
+*   VSAT =  2.3400 V  ON -> Saturation
+*
+* Region equations (log10 domain):
+*   OFF  (Vgs < V1)         : log10(Ids) = -13.0522  (= 8.87e-14 A)
+*   SUB  (V1 <= Vgs < V2)   : log10(Ids) = 13.5553*Vgs - 9.8522
+*                              SS = 73.8 mV/dec
+*   ON   (V2 <= Vgs < VSAT) : log10(Ids) = 0.5023*Vgs^3
+*                                         - 2.8906*Vgs^2
+*                                         + 5.5456*Vgs
+*                                         - 9.6141
+*   SAT  (Vgs >= VSAT)      : log10(Ids) = -6.0290  (= 9.35e-7 A)
+*
+* Ports: drain  gate  source
+* Usage: XDEV drain gate source IGZO_EXACT
+* ============================================================
+
+.SUBCKT IGZO_EXACT drain gate source
++ PARAMS:
++ IOFF_LOG=-13.052177
++ SUB_A=13.555261  SUB_B=-9.852231
++ ON_A=0.502294  ON_B=-2.890559  ON_C=5.545629  ON_D=-9.614088
++ ISAT_LOG=-6.029022
++ V1=-0.236067  V2=0.029421  VSAT=2.34
+
+* Helper expression for Vgs
+* log10(Ids) chosen by region, then raised to power of 10
+
+RGATE  gate  source  1T
+
+BIGZO drain source I={
++ IF( V(gate,source) < V1 ,
++   POW(10, IOFF_LOG) ,
++   IF( V(gate,source) < V2 ,
++     POW(10, SUB_A*V(gate,source) + SUB_B) ,
++     IF( V(gate,source) < VSAT ,
++       POW(10, ON_A*PWR(V(gate,source),3)
++             + ON_B*PWR(V(gate,source),2)
++             + ON_C*V(gate,source)
++             + ON_D) ,
++       POW(10, ISAT_LOG)
++     )
++   )
++ )}
+
+.ENDS IGZO_EXACT

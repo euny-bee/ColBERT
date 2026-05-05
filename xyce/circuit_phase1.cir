@@ -1,0 +1,44 @@
+* ============================================================
+* Phase 1 only — Data store & compensation
+* V1=3V, V2=3V, V3=3V, V4=0V, V5=-3V  (all constant)
+*
+* Circuit topology:
+*   XM2  v1n  v2n  mid   drain=V1, gate=V2, source=mid
+*   XM1  mid  v3n  sn    drain=mid, gate=V3, source=SN
+*   XM0  mid  sn   v5s   drain=mid, gate=SN, source=V5
+*   C1   sn   v4n        SN to V4
+* ============================================================
+
+.TITLE Phase 1
+
+.INCLUDE igzo_smooth.sub
+
+VV1  v1n  0  DC 3.0
+VV2  v2n  0  DC 3.0
+VV3  v3n  0  DC 3.0
+VV4  v4n  0  DC 0.0
+
+VV5   v5raw  0    DC -3.0
+VM0s  v5raw  v5s  DC 0     ; current sense for M0
+
+C1  sn  v4n  100f  IC=0
+
+XM2  v1n  v2n  mid  IGZO_SMOOTH
+XM1  mid  v3n  sn   IGZO_SMOOTH
+XM0  mid  sn   v5s  IGZO_SMOOTH
+
+RBLEED  sn   0  10G
+RMID    mid  0  10G
+CMID    mid  0  1f
+CSN     sn   0  1f
+
+.IC  V(sn)=0  V(mid)=0
+
+.OPTIONS TIMEINT METHOD=TRAP ABSTOL=1e-13 RELTOL=1e-3
+.OPTIONS DEVICE GMIN=1e-15
+
+.TRAN 0.2n 100n UIC
+
+.PRINT TRAN FORMAT=CSV  TIME  V(sn)  V(mid)  I(VM0s)
+
+.END

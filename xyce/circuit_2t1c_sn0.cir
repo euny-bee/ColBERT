@@ -1,0 +1,36 @@
+* ============================================================
+* 2T1C simplified (M2 removed)
+* M1: gate=V3=3V, drain=mid, source=SN
+* M0: gate=SN,   drain=mid, source=V5=1V
+* C1: SN to V4=0V
+* Initial condition: V(SN) = 0V
+* ============================================================
+
+.TITLE 2T1C SN_IC=0V
+
+.INCLUDE igzo_smooth.sub
+
+VV3  v3n  0  DC 3.0
+VV4  v4n  0  DC 0.0
+VV5  v5n  0  DC 1.0
+
+C1  sn  v4n  100f  IC=0
+
+XM1  mid  v3n  sn   IGZO_SMOOTH
+XM0  mid  sn   v5n  IGZO_SMOOTH
+
+RBLEED  sn   0  10G
+RMID    mid  0  10G
+CMID    mid  0  1f
+CSN     sn   0  1f
+
+.IC  V(sn)=0  V(mid)=0
+
+.OPTIONS TIMEINT METHOD=TRAP ABSTOL=1e-13 RELTOL=1e-3
+.OPTIONS DEVICE GMIN=1e-15
+
+.TRAN 0.5n 200n UIC
+
+.PRINT TRAN FORMAT=CSV  TIME  V(sn)  V(mid)
+
+.END
