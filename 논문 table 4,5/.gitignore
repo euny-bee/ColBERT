@@ -1,0 +1,32 @@
+/experiments/
+/checkpoints/
+/data/
+/logs/
+/mlruns/
+/profiler/
+/emb_cache/
+*.pt
+
+# 실험 로그 파일
+*.log
+*.csv
+*.xlsx
+*.png
+*.claude
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook
+.ipynb_checkpoints
+# notebooks/
+
+# mac
+.DS_Store
+
+# Other
+.vscode
+*.tsv
+.claude/settings.local.json
