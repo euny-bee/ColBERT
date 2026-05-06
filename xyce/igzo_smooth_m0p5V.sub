@@ -1,0 +1,28 @@
+* ============================================================
+* IGZO TFT Behavioral Subcircuit — Vth shifted -0.5V
+* Base: igzo_smooth.sub  |  Shift: Vth - 0.5V
+*
+* Fitted parameters (logistic + linear extension):
+*   L     = 6.9526
+*   K     = 5.0889
+*   V0    = -0.3898 V  (original 0.1102 - 0.5)
+*   B     = -13.1232
+*   VSAT  = 0.787  V   (original 1.287 - 0.5)
+*   SLOPE = 2.307e-7 A/V
+*   R²    = 0.9907
+*
+* Ports: drain  gate  source
+* Usage: XDEV drain gate source IGZO_SMOOTH_M0P5V
+* ============================================================
+
+.SUBCKT IGZO_SMOOTH_M0P5V drain gate source
++ PARAMS: L=6.9526 K=5.0889 V0=-0.3898 B=-13.1232 VSAT=0.787 SLOPE=2.307e-7
+
+RGATE  gate  source  1T
+
+BIGZO drain source I={
++ (POW(10, B + L/(1+EXP(-K*(MIN(V(gate,source),VSAT)-V0)))) + MAX(0,V(gate,source)-VSAT)*SLOPE) -
++ (POW(10, B + L/(1+EXP(-K*(MIN(V(gate,drain), VSAT)-V0)))) + MAX(0,V(gate,drain) -VSAT)*SLOPE)
++ }
+
+.ENDS IGZO_SMOOTH_M0P5V

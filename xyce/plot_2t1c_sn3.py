@@ -25,17 +25,17 @@ axes[0].set_ylabel("V(SN) [V]", fontsize=11)
 axes[0].set_ylim(0.5, 3.5)
 axes[0].legend(fontsize=9, loc="upper right")
 axes[0].grid(True, linestyle="--", alpha=0.4)
-axes[0].set_title("Storage Node Voltage  —  방전 via M0 (Vgs_M0 = V(SN) − 1V)", fontsize=10)
+axes[0].set_title("Storage Node Voltage  —  discharge via M0  (Vgs_M0 = V(SN) − 1V)", fontsize=10)
 
 # ── V(mid) ─────────────────────────────────────────────────────────────
 axes[1].plot(t_us, vmid, color="darkorange", linewidth=2, label="V(mid)")
 axes[1].axhline(1.0, color="tomato", linestyle="--", linewidth=1.0, alpha=0.7,
                 label="V5 = 1V")
 axes[1].set_ylabel("V(mid) [V]", fontsize=11)
-axes[1].set_xlabel("Time [µs]", fontsize=11)
+axes[1].set_xlabel("Time [us]", fontsize=11)
 axes[1].legend(fontsize=9, loc="upper right")
 axes[1].grid(True, linestyle="--", alpha=0.4)
-axes[1].set_title("Mid Node Voltage  —  공유 드레인 노드", fontsize=10)
+axes[1].set_title("Mid Node Voltage  —  shared drain node (M1 & M0)", fontsize=10)
 
 # Annotation: steady-state approach
 ss_vsn = vsn.iloc[-1]

@@ -1,45 +1,43 @@
 * ============================================================
-* IGZO TFT Behavioral Subcircuit — Smooth Logistic Model
+* IGZO TFT Behavioral Subcircuit — Smooth Logistic + Linear Extension
 * Fit from igzo_measure.csv  (VDS=0.5V fixed measurement)
 *
-* Model:  log10(Ids) = B + L / (1 + exp(-K*(Vgs - V0)))
-*         clamped flat for Vgs >= VSAT
+* Model:  I(Vgs) = logistic(MIN(Vgs,VSAT)) + MAX(0, Vgs-VSAT) * SLOPE
 *
-* Fit parameters (R^2 = 0.994):
-*   L    = 6.9509   (log10 swing: -13.007 -> -6.056)
-*   K    = 3.3919   (steepness,  SS_eff ~ 679 mV/dec at inflection)
-*   V0   = 0.0802 V (inflection point, approx Vth)
-*   B    = -13.0068 (OFF floor: ~9.8e-14 A)
-*   VSAT = 2.34 V   (saturation onset, Ion ~ 8.8e-7 A)
+*   Logistic region (Vgs < VSAT):
+*     log10(Ids) = B + L / (1 + exp(-K*(Vgs - V0)))
+*
+*   Linear extension (Vgs >= VSAT), fitted from measured data 2.34~3.0V:
+*     Ids = I_logistic(VSAT) + SLOPE * (Vgs - VSAT)
+*     SLOPE = 166.67 nA/V  (R^2 = 1.000)
+*
+* Fit parameters:
+*   L     = 6.9509    (log10 swing)
+*   K     = 3.3919    (steepness)
+*   V0    = 0.0802 V  (inflection point, approx Vth)
+*   B     = -13.0068  (OFF floor: ~9.8e-14 A)
+*   VSAT  = 2.34 V    (logistic-to-linear transition)
+*   SLOPE = 1.667e-7 A/V (linear region slope from measured data)
 *
 * Ports: drain  gate  source
 * Usage: XDEV drain gate source IGZO_SMOOTH
 * ============================================================
 
 .SUBCKT IGZO_SMOOTH drain gate source
-+ PARAMS: L=6.9509 K=3.3919 V0=0.0802 B=-13.0068 VSAT=2.34
-
-* Vgs effective
-* Logistic value at VSAT (saturation clamp)
-* POW(10, x) = 10^x for current in amperes
++ PARAMS: L=6.9509 K=3.3919 V0=0.0802 B=-13.0068 VSAT=2.34 SLOPE=1.667e-7
 
 * Gate resistor: DC path for gate node (prevents singular matrix).
 RGATE  gate  source  1T
 
-* Bidirectional (symmetric) model:
-*   I_net = f(Vgs_fwd) - f(Vgs_rev)
-*         = f(gate-source) - f(gate-drain)
+* Bidirectional model with linear extension:
+*   I_total(Vgs) = logistic(MIN(Vgs,VSAT)) + MAX(0, Vgs-VSAT)*SLOPE
+*   I_net = I_total(gate-source) - I_total(gate-drain)
 *
-* Why bidirectional:
-*   Vds > 0  → fwd > rev → I_net > 0  (normal forward current)
-*   Vds = 0  → fwd = rev → I_net = 0  (no current at zero bias)
-*   Vds < 0  → fwd < rev → I_net < 0  (reverse current = self-clamping)
-*              prevents node voltage from diving below supply rail
-*
-* MIN(Vgs, VSAT) clamps the logistic at saturation onset.
+* When both sides exceed VSAT, linear terms give net current proportional
+* to Vds (correct linear-region behavior), fixing the old clamp artifact.
 BIGZO drain source I={
-+ POW(10, B + L/(1+EXP(-K*(MIN(V(gate,source),VSAT)-V0)))) -
-+ POW(10, B + L/(1+EXP(-K*(MIN(V(gate,drain), VSAT)-V0))))
++ (POW(10, B + L/(1+EXP(-K*(MIN(V(gate,source),VSAT)-V0)))) + MAX(0,V(gate,source)-VSAT)*SLOPE) -
++ (POW(10, B + L/(1+EXP(-K*(MIN(V(gate,drain), VSAT)-V0)))) + MAX(0,V(gate,drain) -VSAT)*SLOPE)
 + }
 
 .ENDS IGZO_SMOOTH
