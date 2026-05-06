@@ -4,6 +4,8 @@
 /logs/
 /mlruns/
 /profiler/
+/emb_cache/
+*.pt
 
 # 실험 로그 파일
 *.log

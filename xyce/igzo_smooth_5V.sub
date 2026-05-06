@@ -1,0 +1,31 @@
+* ============================================================
+* IGZO TFT Behavioral Subcircuit — Smooth Logistic + Linear Extension
+* Vth shifted by -5V from igzo_smooth.sub
+*
+* Model:  I(Vgs) = logistic(MIN(Vgs,VSAT)) + MAX(0, Vgs-VSAT) * SLOPE
+*
+* Fit parameters (original -> shifted by -5V):
+*   L     = 6.9509    (log10 swing, unchanged)
+*   K     = 3.3919    (steepness, unchanged)
+*   V0    = -4.9198 V (inflection point: 0.0802 - 5)
+*   B     = -13.0068  (OFF floor, unchanged)
+*   VSAT  = -2.66  V  (logistic-to-linear transition: 2.34 - 5)
+*   SLOPE = 1.667e-7 A/V (linear region slope, unchanged)
+*
+* Ports: drain  gate  source
+* Usage: XDEV drain gate source IGZO_SMOOTH_5V
+* ============================================================
+
+.SUBCKT IGZO_SMOOTH_5V drain gate source
++ PARAMS: L=6.9509 K=3.3919 V0=-4.9198 B=-13.0068 VSAT=-2.66 SLOPE=1.667e-7
+
+* Gate resistor: DC path for gate node (prevents singular matrix).
+RGATE  gate  source  1T
+
+* Bidirectional model with linear extension.
+BIGZO drain source I={
++ (POW(10, B + L/(1+EXP(-K*(MIN(V(gate,source),VSAT)-V0)))) + MAX(0,V(gate,source)-VSAT)*SLOPE) -
++ (POW(10, B + L/(1+EXP(-K*(MIN(V(gate,drain), VSAT)-V0)))) + MAX(0,V(gate,drain) -VSAT)*SLOPE)
++ }
+
+.ENDS IGZO_SMOOTH_5V
