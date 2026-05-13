@@ -1,0 +1,26 @@
+* ============================================================
+* IGZO TFT Behavioral Subcircuit — scipy refit (K=5.0889)
+* Original Vth baseline: V0=0.1102 (scipy curve_fit result)
+*
+*   L     = 6.9526
+*   K     = 5.0889
+*   V0    = 0.1102 V
+*   B     = -13.1232
+*   VSAT  = 1.287  V
+*   SLOPE = 2.307e-7 A/V
+*
+* Ports: drain  gate  source
+* Usage: XDEV drain gate source IGZO_SMOOTH_K5
+* ============================================================
+
+.SUBCKT IGZO_SMOOTH_K5 drain gate source
++ PARAMS: L=6.9526 K=5.0889 V0=0.1102 B=-13.1232 VSAT=1.287 SLOPE=2.307e-7
+
+RGATE  gate  source  1T
+
+BIGZO drain source I={
++ (POW(10, B + L/(1+EXP(-K*(MIN(V(gate,source),VSAT)-V0)))) + MAX(0,V(gate,source)-VSAT)*SLOPE) -
++ (POW(10, B + L/(1+EXP(-K*(MIN(V(gate,drain), VSAT)-V0)))) + MAX(0,V(gate,drain) -VSAT)*SLOPE)
++ }
+
+.ENDS IGZO_SMOOTH_K5

@@ -1,0 +1,23 @@
+* 3T1C K5 orig (Vth=+0.11V)  DC sweep V4=-3V to 3V, V5=0V
+* V(SN) = V4 + 3  (C1 bootstrap: 3V stored from previous phase)
+.TITLE 3T1C K5 DC sweep V4
+.INCLUDE igzo_smooth_k5.sub
+
+VV1  v1n  0  DC 0.0
+VV2  v2n  0  DC 3.0
+VV3  v3n  0  DC -3.0
+VV4  v4n  0  DC 0.0
+VV5  v5n  0  DC 3.0
+
+* V(SN) tracks V4 + 3V  (bootstrap coupling through C1)
+BSN  sn  0  V={V(v4n) + 3}
+
+XM2  v1n  v2n  mid  IGZO_SMOOTH_K5
+XM1  mid  v3n  sn   IGZO_SMOOTH_K5
+XM0  mid  sn   v5n  IGZO_SMOOTH_K5
+
+RMID    mid  0  10T
+
+.DC VV4 -3 3 0.06
+.PRINT DC FORMAT=CSV  V(v4n)  V(sn)  V(mid)  I(VV5)
+.END

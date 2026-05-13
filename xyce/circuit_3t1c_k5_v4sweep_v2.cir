@@ -1,0 +1,24 @@
+* 3T1C K5  DC sweep V4=-1.5V to +1.5V
+* V1=0V, V2=3V, V3=-3V, V5=1V, VSN_initial=0V
+* V(SN) = V4  (bootstrap: 0V stored)
+.TITLE 3T1C K5 DC sweep V4 v2
+.INCLUDE igzo_smooth_k5.sub
+
+VV1  v1n  0  DC 0.0
+VV2  v2n  0  DC 3.0
+VV3  v3n  0  DC -3.0
+VV4  v4n  0  DC 0.0
+VV5  v5n  0  DC 1.0
+
+* V(SN) = V4  (VSN_initial = 0V)
+BSN  sn  0  V={V(v4n)}
+
+XM2  v1n  v2n  mid  IGZO_SMOOTH_K5
+XM1  mid  v3n  sn   IGZO_SMOOTH_K5
+XM0  mid  sn   v5n  IGZO_SMOOTH_K5
+
+RMID    mid  0  10T
+
+.DC VV4 -1.5 1.5 0.03
+.PRINT DC FORMAT=CSV  V(v4n)  V(sn)  V(mid)  I(VV5)
+.END

@@ -1,0 +1,16 @@
+* Phase 2 - single M3: V5=1.0V fixed, V4 swept -1~2V
+* VSN_final = (V5-V4) + Vth = 1.1102 - V4
+.INCLUDE igzo_smooth_k5.sub
+VV1  v1n  0  DC 0.0
+VV2  v2n  0  DC 3.0
+VV3  v3n  0  DC -3.0
+VV4  v4n  0  DC 0.0
+V4B  v4bn 0  DC 1.0       ; V̄4 = +1.0V  (Phase 2 VDD)
+BSN  sn   0  V={1.1102 - V(v4n)}
+XM5  v1n  v2n  mid  IGZO_SMOOTH_K5
+XM4  mid  v3n  sn   IGZO_SMOOTH_K5
+XM3  mid  sn   v4bn IGZO_SMOOTH_K5
+RMID mid  0  10T
+.DC VV4 -1 2 0.02
+.PRINT DC FORMAT=CSV V(v4n) V(sn) V(mid) I(V4B)
+.END

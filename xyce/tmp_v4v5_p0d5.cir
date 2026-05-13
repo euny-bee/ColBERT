@@ -1,0 +1,15 @@
+* 3T1C  VSN=Vth+V4+V5  V5=0.5V
+.INCLUDE igzo_smooth_k5.sub
+VV1  v1n  0  DC 0.0
+VV2  v2n  0  DC 3.0
+VV3  v3n  0  DC -3.0
+VV4  v4n  0  DC 0.0
+VV5  v5n  0  DC 0.5
+BSN  sn  0  V={V(v4n) + 0.6102}
+XM2  v1n  v2n  mid  IGZO_SMOOTH_K5
+XM1  mid  v3n  sn   IGZO_SMOOTH_K5
+XM0  mid  sn   v5n  IGZO_SMOOTH_K5
+RMID    mid  0  10T
+.DC VV4 -1 1 0.02
+.PRINT DC FORMAT=CSV  V(v4n)  V(sn)  V(mid)  I(VV5)
+.END

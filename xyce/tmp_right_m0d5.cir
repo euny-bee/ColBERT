@@ -1,0 +1,16 @@
+* Right circuit (M3): V4=-0.5V fixed, V5 swept
+* VSN = Vth + V4_fixed + V5,  Vgs_M3 = VSN - V4 = Vth + V5
+.INCLUDE igzo_smooth_k5.sub
+VV1  v1n  0  DC 0.0
+VV2  v2n  0  DC 3.0
+VV3  v3n  0  DC -3.0
+VV4  v4n  0  DC -0.5
+VV5  v5n  0  DC 0.0
+BSN  sn  0  V={V(v5n) + -0.3898}
+XM5  v1n  v2n  mid  IGZO_SMOOTH_K5
+XM4  mid  v3n  sn   IGZO_SMOOTH_K5
+XM3  mid  sn   v4n  IGZO_SMOOTH_K5
+RMID mid  0  10T
+.DC VV5 -1 1 0.02
+.PRINT DC FORMAT=CSV V(v5n) V(sn) V(mid) I(VV4)
+.END
