@@ -1,0 +1,34 @@
+{
+  "selected_qids": [
+    "1000000",
+    "1000004",
+    "1000006"
+  ],
+  "selected_queries": [
+    "where does real insulin come from",
+    "where does name nora come from",
+    "where does most of the iron ore come from"
+  ],
+  "relevant_pids": [
+    "7264253",
+    "7264266",
+    "7264308"
+  ],
+  "n_passages": 200,
+  "n_centroids": 100,
+  "doc_embs_shape": [
+    12919,
+    128
+  ],
+  "query_embs_shape": [
+    96,
+    128
+  ],
+  "hit_rates": {
+    "top5": 0.8,
+    "top10": 0.8,
+    "top20": 0.8848,
+    "top30": 0.897,
+    "top50": 0.9818
+  }
+}

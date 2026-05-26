@@ -1,0 +1,14 @@
+{
+  "bucket_cutoffs": [
+    -0.049882,
+    0.001298,
+    0.052428
+  ],
+  "bucket_weights": [
+    -0.089088,
+    -0.022381,
+    0.024919,
+    0.091881
+  ],
+  "description": "2-bit quantization: cutoffs for bucketize(), weights are dequantized values (0->w0, 1->w1, 2->w2, 3->w3)"
+}
