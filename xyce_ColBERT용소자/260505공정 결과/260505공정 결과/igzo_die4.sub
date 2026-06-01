@@ -1,0 +1,37 @@
+* ============================================================
+* IGZO TFT Behavioral Subcircuit -- 260505 die4_ovl20_R0
+* B1500A transfer curve fit (VDS=1V, gate -3~+3V)
+*
+* Model:
+*   Logistic:    log10(Ids) = B + L / (1 + exp(-K*(Vgs - V0)))
+*   Linear ext:  Ids += MAX(0, Vgs-VSAT) * SLOPE   (Vgs >= VSAT)
+*   Bidirectional: I_net = I(V(gate,source)) - I(V(gate,drain))
+*
+* Fit parameters (scipy curve_fit, R2=0.9921):
+*   L     = 6.1120
+*   K     = 2.7319
+*   V0    = 0.1510 V   (Vth, logistic inflection point)
+*   B     = -10.7139   (OFF floor ~1.9e-11 A)
+*   VSAT  = 2.88 V
+*   SLOPE = 4.0332e-5 A/V
+*
+* Performance (die4 best device):
+*   SS    = 240 mV/dec   [= 4000/(L*K)]
+*   Ion   = ~29 uA
+*   Ion/Ioff = 2.8e6
+*
+* Ports: drain  gate  source
+* Usage: XDEV drain gate source IGZO_DIE4
+* ============================================================
+
+.SUBCKT IGZO_DIE4 drain gate source
++ PARAMS: L=6.1120 K=2.7319 V0=0.1510 B=-10.7139 VSAT=2.88 SLOPE=4.0332e-5
+
+RGATE  gate  source  1T
+
+BIGZO drain source I={
++ (POW(10, B + L/(1+EXP(-K*(MIN(V(gate,source),VSAT)-V0)))) + MAX(0,V(gate,source)-VSAT)*SLOPE) -
++ (POW(10, B + L/(1+EXP(-K*(MIN(V(gate,drain), VSAT)-V0)))) + MAX(0,V(gate,drain) -VSAT)*SLOPE)
++ }
+
+.ENDS IGZO_DIE4

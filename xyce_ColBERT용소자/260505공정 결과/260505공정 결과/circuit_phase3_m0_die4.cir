@@ -1,0 +1,34 @@
+* ============================================================
+* Dual 3T1C -- Phase 3 (L2 search) -- M0 only
+* 260505 die4_ovl20_R0
+*
+* Stored data: V2 = -1.0V  (-V2 = 1.0V was Phase 2 source line)
+* Phase 3: V1 swept -1V to +2V
+*
+* VSN0 = V1 + Vth + V2 = V1 + 0.1510 + (-1.0) = V1 - 0.8490
+*   (capacitor stores Vth from Phase 2 diode connection at -V2=1V)
+*
+* M0: drain=VML(0V), gate=VSN0, source=VDD(1V)
+*     ON when V1 > -V2 = 1V  (Vgd > Vth)
+* ============================================================
+
+.TITLE Phase3 M0 die4 -- V1 sweep
+
+.INCLUDE igzo_die4.sub
+
+VV1   v1n   0  DC 0.0      ; query voltage V1, swept
+VVDD  vddn  0  DC 1.0      ; VDD = 1V (Phase 3 source line)
+
+* VSN0: M0 gate node
+BVSN0  sn0  0  V={V(v1n) + -0.8490}
+
+* M0: drain=VML(0V), gate=VSN0, source=VDD
+XM0  vml  sn0  vddn  IGZO_DIE4
+
+RMID  vml  0  10T
+
+.DC VV1 -1.0 2.0 0.01
+
+.PRINT DC FORMAT=CSV  V(v1n)  V(sn0)  V(vml)  I(VVDD)
+
+.END
