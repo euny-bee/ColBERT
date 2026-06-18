@@ -153,7 +153,89 @@ best_analog   = argmin_j(I_total[i])     # 최소 전류 = MaxSim winner
 
 ---
 
-## 8. 생성 파일 목록
+## 8. Option C 시뮬레이션 (Vth 랜덤 편차 모델)
+
+### 8-1. 배경
+
+Option A는 Vth compensation으로 소자 편차를 소거하지만, 실제 하드웨어(PBS 효과 등)에서는
+Vth가 시간에 따라 양(+)의 방향으로 drift함. Option C는 이를 모델링한 no-compensation 시나리오.
+
+### 8-2. Option C 회로 모델
+
+```
+Option A: vgs = |Q_k - D_k| + Vth   → Vth 소거, 소자 편차 무관
+Option C: vgs = |Q_k - D_k|         → Vth 소거 없음, dead zone 발생
+          dead zone = |Q-D| < Vth_ij  (소자마다 다름)
+```
+
+### 8-3. Vth 분포 설계
+
+| 항목 | 값 |
+|------|---|
+| 분포 형태 | Truncated Gaussian |
+| mean | 0.0 V |
+| std | 0.15 V |
+| range | [0, 0.5] V (PBS: 양의 shift만) |
+| Vth_actual | 0.151045 + shift |
+| 할당 단위 | (Qi, Dj) pair마다 독립 샘플링 |
+| seed | 42 (재현 가능) |
+
+**분포 형태**: 0V에서 피크(shift 없는 소자가 가장 많음), 0.5V쪽으로 decay
+
+### 8-4. 시뮬레이션 구조
+
+```python
+# 문서 pid당 1회 샘플링
+Vth_mat = sample_vth((32, M))   # shape: (32, M) — Qi × Dj pair마다 독립
+
+# Option C IDS 계산
+vgs = |Q_k - D_k|               # Vth 보상 없음
+IDS = f(vgs, Vth_mat[i,j])      # 소자별 Vth 적용
+
+# MinCurrent → rank (낮을수록 유사)
+score = Σᵢ minⱼ Σₖ IDS(|Qᵢₖ - Dⱼₖ|, Vth[i,j])
+```
+
+### 8-5. 6가지 방법 비교 결과 (3 queries, 200 docs)
+
+| Query | Digital f32 | Digital 2bit | OptionA f32 | OptionA 2bit | OptionC f32 | OptionC 2bit |
+|-------|------------|------------|------------|------------|------------|------------|
+| q0 | rank **1**/127 | rank **1**/127 | rank **1**/124 | rank **1**/124 | rank 163/198 | rank 167/198 |
+| q1 | rank **1**/70 | rank **1**/70 | rank **1**/82 | rank **1**/82 | rank 22/193 | rank 31/193 |
+| q2 | rank **1**/108 | rank **1**/108 | rank **1**/85 | rank **1**/85 | rank **4**/194 | rank **6**/194 |
+
+| | dig_f32 | dig_2bt | optA_f32 | optA_2bt | optC_f32 | optC_2bt |
+|--|---------|---------|---------|---------|---------|---------|
+| Success@10 | 100% | 100% | 100% | 100% | 0% | 0% |
+| Success@20 | 100% | 100% | 100% | 100% | 0% | 0% |
+| Success@50 | 100% | 100% | 100% | 100% | 67% | 67% |
+
+### 8-6. 후보 집합 비교 (Step 3, nprobe=2)
+
+| Query | Digital | OptionA 교집합 | Jaccard(D↔A) | OptionC 교집합 | Jaccard(D↔C) |
+|-------|---------|-------------|------------|-------------|------------|
+| q0 | 127 | 124/127 | **0.976** | 127/127 | 0.641 |
+| q1 | 70 | 64/70 | 0.727 | 70/70 | 0.363 |
+| q2 | 108 | 85/85 | 0.787 | 108/108 | 0.557 |
+
+- OptionA: Digital과 Jaccard 높음 → Vth compensation 덕분에 centroid 선택 유사
+- OptionC: Digital ⊂ OptionC (Digital 후보 전체 포함), Vth 노이즈로 더 넓게 커버
+
+### 8-7. 시각화 파일 목록
+
+| 파일 | 내용 |
+|------|------|
+| `vth_shift_distribution.png` | Truncated Gaussian Vth 분포 |
+| `compare_candidates.png` | Digital vs OptionA 후보 집합 비교 |
+| `compare_candidates_optionC.png` | Digital vs OptionC 후보 집합 비교 |
+| `compare_candidates_all.png` | 3-way 통합 비교 (7-way Venn 분할 bar) |
+| `compare_ranking_L2_optA.png` | Digital L2 vs OptionA rank scatter + bump chart |
+| `compare_ranking_L2_optC.png` | Digital L2 vs OptionC rank scatter + bump chart |
+| `compare_ranking_all3.png` | Digital L2 / OptionA / OptionC 3-way 비교 |
+
+---
+
+## 9. 생성 파일 목록
 
 | 파일 | 위치 | 내용 |
 |------|------|------|
@@ -167,7 +249,7 @@ best_analog   = argmin_j(I_total[i])     # 최소 전류 = MaxSim winner
 
 ---
 
-## 9. 다음 단계
+## 10. 다음 단계
 
 - [ ] Xyce 재설치 후 단일 셀 V-I 검증 (단계 1)
 - [ ] 1-row Xyce 시뮬레이션 (128 차원, 1 쿼리 vs 1 centroid)
