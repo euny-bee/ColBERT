@@ -249,7 +249,79 @@ score = Σᵢ minⱼ Σₖ IDS(|Qᵢₖ - Dⱼₖ|, Vth[i,j])
 
 ---
 
-## 10. 다음 단계
+## 10. OptionC 성능 차이 분석 (q0 vs q2)
+
+### 10-1. 현상
+
+| | Digital margin | OptionC rank | OptionC current |
+|--|--------------|-------------|----------------|
+| q0 | 22.54 - 10.48 = **12.06** | **163**/198 | **3.50 µA** |
+| q1 | 25.45 - 12.42 = **13.04** | **22**/193 | **2.52 µA** |
+| q2 | 24.93 - 13.91 = **11.02** | **4**/194 | **2.31 µA** |
+
+q0가 digital margin이 중간임에도 OptionC rank가 가장 나쁨.
+
+### 10-2. Vth 크기 가설 — 기각
+
+qrel 문서에 적용된 실제 Vth 값:
+
+| | Vth mean | shift mean | shift > 0.3V |
+|--|---------|-----------|-------------|
+| q0 | 0.2686V | 0.1176V | 2.8% |
+| q1 | 0.2715V | 0.1204V | 4.7% |
+| q2 | 0.2667V | 0.1156V | 3.3% |
+
+→ **세 query 모두 Vth 분포 거의 동일** — Vth 크기 차이는 원인 아님
+
+### 10-3. 실제 원인: n_tokens → min|Q-D| → current 연결 구조
+
+**n_tokens (Step 3)**:
+
+| | Digital | OptionA | OptionC |
+|--|---------|---------|---------|
+| q0 | **19** | **19** | 5 |
+| q1 | **32** | **32** | 6 |
+| q2 | **31** | **32** | 9 |
+
+q0의 qrel이 Digital/OptionA에서도 n_tokens=19로 q1/q2(31~32)보다 적음.
+
+**이것이 의미하는 것**: 32개 query token 중 13개는 qrel 문서 토큰들과 centroid상 멂 → 해당 query token들의 min|Q-D|가 큼
+
+| | **min\|Q-D\|** | OptionC current |
+|--|--------------|----------------|
+| q0 | **6.39** | **3.50 µA** |
+| q1 | **5.29** | **2.52 µA** |
+| q2 | **5.66** | **2.31 µA** |
+
+**연결 흐름**:
+```
+n_tokens(Digital) 적음 (19)
+    → 많은 query token이 qrel과 centroid상 거리 멂
+    → min|Q-D| 큼 (6.39)
+    → OptionC current 높음 (3.50 µA)
+    → 경쟁 문서에 밀려 rank 163
+```
+
+### 10-4. Digital margin이 OptionC를 보호하지 못하는 이유
+
+q0의 OptionC에서 qrel(3.50 µA)보다 낮은 current를 받은 162개 문서:
+- Digital score: max=10.48, mean=4.81, min=0.73
+- **qrel(22.54)의 절반(11.27) 이상인 문서: 0개**
+
+→ 162개 문서 전부 digital에서 형편없음에도 OptionC에서 qrel을 이긴 이유:
+
+**Vth dead zone 효과**: OptionC에서 |Q-D| < Vth_ij인 dimension → IDS ≈ 0 (transistor off)
+→ 일부 문서가 우연히 낮은 Vth_ij를 받거나 작은 |Q-D|를 가져 인위적으로 낮은 current를 받음
+
+```
+Digital margin = dot product 공간에서의 여유
+OptionC 순위  = current 공간에서의 정렬 (완전히 다른 metric + Vth noise)
+→ digital margin은 OptionC에서 의미 없음
+```
+
+---
+
+## 11. 다음 단계
 
 - [ ] Xyce 재설치 후 단일 셀 V-I 검증 (단계 1)
 - [ ] 1-row Xyce 시뮬레이션 (128 차원, 1 쿼리 vs 1 centroid)
