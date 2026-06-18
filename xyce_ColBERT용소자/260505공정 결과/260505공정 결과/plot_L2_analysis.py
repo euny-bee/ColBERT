@@ -188,13 +188,13 @@ def plot_phase3(die_label, params, save_dir):
 # ══════════════════════════════════════════════════════════════════════════════
 
 def plot_AC(die_label, params, save_dir,
-            shifts=(0.0, 0.1, 0.2, 0.5, 1.0)):
+            shifts=(0.0, 0.1, 0.2, 0.3, 0.4, 0.5)):
     Vth_orig = params["Vth"]
     Vth_vals = [Vth_orig + s for s in shifts]
     labels   = [f"Vth={Vth_orig:.3f}V (원본)"] + \
                [f"+{s:.1f}V  ->  {v:.3f}V" for s, v in zip(shifts[1:], Vth_vals[1:])]
-    colors   = ["black", "royalblue", "forestgreen", "darkorange", "crimson"]
-    lstyles  = ["-", "--", "-.", ":", (0,(3,1,1,1))]
+    colors   = ["black", "royalblue", "forestgreen", "gold", "darkorange", "crimson"]
+    lstyles  = ["-", "--", "-.", ":", (0,(3,1,1,1)), (0,(5,1))]
 
     # 스윕 포인트
     V2_A = np.arange(-1.0,  1.0 + 1e-9, 0.05)

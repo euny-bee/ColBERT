@@ -30,3 +30,7 @@ __pycache__/
 .vscode
 *.tsv
 .claude/settings.local.json
+*.pptx
+~$*.pptx
+*.npy
+*.txt
