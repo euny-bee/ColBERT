@@ -1,0 +1,42 @@
+* ============================================================
+* [실험] 이상적 square-law MOSFET 모델로 Phase1->Phase2 write 재현
+* 논문(Shin et al.)이 가정한 hard-threshold 모델에서 -V1+Vth 공식이 실제로 성립하는지 확인
+* ============================================================
+
+.TITLE Phase1-2 dual squarelaw -- ideal MOSFET, Vth sweep
+
+.INCLUDE igzo_squarelaw.sub
+
+.PARAM Vth_final = 0.03
+.STEP Vth_final LIST 0.03 0.53 1.03 2.03 3.03
+
+VVML    vml    0  DC 0.0
+VVCOMP  vcompn 0  DC 3.0
+VVREAD  vreadn 0  PWL(0 3.0  0.2u 3.0  0.2001u -3.0  500000u -3.0)
+VBL_L   vbl_l  0  PWL(0 0.0  0.2u 0.0  0.2001u -1.0  500000u -1.0)
+VBL_R   vbl_r  0  PWL(0 0.0  0.2u 0.0  0.2001u  1.0  500000u  1.0)
+
+XM2  vml    vreadn  midL  IGZO_SQLAW  PARAMS: VTH={Vth_final}
+XM1  midL   vcompn  sn    IGZO_SQLAW  PARAMS: VTH={Vth_final}
+XM0  midL   sn      vbl_l IGZO_SQLAW  PARAMS: VTH={Vth_final}
+CSN  sn     0  100f  IC=-1.5
+
+XM5  vml    vreadn  midR  IGZO_SQLAW  PARAMS: VTH={Vth_final}
+XM4  midR   vcompn  snb   IGZO_SQLAW  PARAMS: VTH={Vth_final}
+XM3  midR   snb     vbl_r IGZO_SQLAW  PARAMS: VTH={Vth_final}
+CSNB snb    0  100f  IC=-1.5
+
+RLEAK_L   sn    0  10G
+RLEAK_R   snb   0  10G
+RMID_L    midL  0  10G
+RMID_R    midR  0  10G
+
+.OPTIONS TIMEINT METHOD=TRAP ABSTOL=1e-14 RELTOL=1e-4
+.OPTIONS NONLIN CONTINUATION=1
+
+.TRAN 1n 500000u UIC
+
+.PRINT TRAN FORMAT=CSV  TIME  V(sn)  V(snb)  V(midL)  V(midR)  V(vreadn)  V(vcompn)  V(vbl_l)  V(vbl_r)
++ I(VVML)  I(VVCOMP)  I(VVREAD)  I(VBL_L)  I(VBL_R)
+
+.END

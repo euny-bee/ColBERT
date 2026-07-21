@@ -1,0 +1,19 @@
+* ============================================================
+* [실험] Vgs=V0(Vth)에서 Ids=1e-14A가 되도록 B,L을 재조정한 버전
+*        (포화전류는 원본과 동일하게 ~29uA 유지, K/V0/VSAT/SLOPE는 원본과 동일)
+*   B + L/2 = -14   (Vgs=V0일 때 목표 전류)
+*   B + L   = -4.5376  (Vgs>>V0 포화전류 = 29uA, 원본과 동일)
+*   -> L=18.9248, B=-23.4624
+* ============================================================
+
+.SUBCKT IGZO_DIE4_SHARPTAIL drain gate source
++ PARAMS: L=18.9248 K=2.7319 V0=0.1510 B=-23.4624 VSAT=2.88 SLOPE=4.0332e-5
+
+RGATE  gate  source  1T
+
+BIGZO drain source I={
++ (POW(10, B + L/(1+EXP(-K*(MIN(V(gate,source),VSAT)-V0)))) + MAX(0,V(gate,source)-VSAT)*SLOPE) -
++ (POW(10, B + L/(1+EXP(-K*(MIN(V(gate,drain), VSAT)-V0)))) + MAX(0,V(gate,drain) -VSAT)*SLOPE)
++ }
+
+.ENDS IGZO_DIE4_SHARPTAIL

@@ -1,0 +1,43 @@
+* ============================================================
+* Dual 3T1C (6T2C) -- Phase2(store)만, SN 초기값=3V (Phase1 생략)
+* [실험] M0 subthreshold 병목 가설 검증: SN을 처음부터 목표값 근처(3V)에서 시작시키면
+*        Vgs_M0 = SN - vbl_l 이 처음부터 크게 걸려서 M0가 세게 켜진 채로 시작 ->
+*        -V1+Vth 이상식에 더 가깝게 수렴하는지 확인
+* ============================================================
+
+.TITLE Phase2-only die4 -- SN initial=3V, Vth sweep
+
+.INCLUDE igzo_die4.sub
+
+.PARAM Vth_final = 0.03
+.STEP Vth_final LIST 0.03 0.53 1.03 2.03 3.03
+
+VVML    vml    0  DC 0.0
+VVCOMP  vcompn 0  DC 3.0
+VVREAD  vreadn 0  DC -3.0
+VBL_L   vbl_l  0  DC -1.0
+VBL_R   vbl_r  0  DC  1.0
+
+XM2  vml    vreadn  midL  IGZO_DIE4  PARAMS: V0={Vth_final}
+XM1  midL   vcompn  sn    IGZO_DIE4  PARAMS: V0={Vth_final}
+XM0  midL   sn      vbl_l IGZO_DIE4  PARAMS: V0={Vth_final}
+CSN  sn     0  100f  IC=3.0
+
+XM5  vml    vreadn  midR  IGZO_DIE4  PARAMS: V0={Vth_final}
+XM4  midR   vcompn  snb   IGZO_DIE4  PARAMS: V0={Vth_final}
+XM3  midR   snb     vbl_r IGZO_DIE4  PARAMS: V0={Vth_final}
+CSNB snb    0  100f  IC=-3.0
+
+RLEAK_L   sn    0  10G
+RLEAK_R   snb   0  10G
+RMID_L    midL  0  10G
+RMID_R    midR  0  10G
+
+.OPTIONS TIMEINT METHOD=TRAP ABSTOL=1e-14 RELTOL=1e-4
+.OPTIONS NONLIN CONTINUATION=1
+
+.TRAN 1n 500000u UIC
+
+.PRINT TRAN FORMAT=CSV  TIME  V(sn)  V(snb)  V(midL)  V(midR)
+
+.END

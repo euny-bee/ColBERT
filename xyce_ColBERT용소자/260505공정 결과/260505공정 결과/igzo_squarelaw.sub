@@ -1,0 +1,15 @@
+* ============================================================
+* Idealized square-law MOSFET model (hard threshold, no subthreshold leak)
+* I = 0.5*K*(Vgs-Vth)^2   for Vgs>Vth,  0 otherwise (hard cutoff)
+* Bidirectional (same topology convention as igzo_die4.sub): I = I(Vgs) - I(Vgd)
+* Ports: drain  gate  source
+* ============================================================
+.SUBCKT IGZO_SQLAW drain gate source
++ PARAMS: VTH=0.1510 K=1e-5
+
+BIGZO drain source I={
++ 0.5*K*MAX(0, V(gate,source)-VTH)**2 -
++ 0.5*K*MAX(0, V(gate,drain)-VTH)**2
++ }
+
+.ENDS IGZO_SQLAW

@@ -1,0 +1,31 @@
+* Phase1 단독, Vth 5개 스윕 (t1 재산정용) -- 충분히 긴 시간(20us)까지 확인
+.TITLE Phase1 dual die4 -- Vth sweep, longer window
+
+.INCLUDE igzo_die4.sub
+
+.PARAM Vth_final = 0.03
+.STEP Vth_final LIST 0.03 0.53 1.03 2.03 3.03
+
+VVML    vml   0  DC 0.0
+VVREAD  vreadn 0 DC 3.0
+VVCOMP  vcompn 0 DC 3.0
+
+XM2  vml    vreadn  midL  IGZO_DIE4  PARAMS: V0={Vth_final}
+XM1  midL   vcompn  sn    IGZO_DIE4  PARAMS: V0={Vth_final}
+CSN  sn     0  100f  IC=-1.5
+
+XM5  vml    vreadn  midR  IGZO_DIE4  PARAMS: V0={Vth_final}
+XM4  midR   vcompn  snb   IGZO_DIE4  PARAMS: V0={Vth_final}
+CSNB snb    0  100f  IC=-1.5
+
+RLEAK_L  sn   0  10T
+RLEAK_R  snb  0  10T
+
+.OPTIONS TIMEINT METHOD=TRAP ABSTOL=1e-14 RELTOL=1e-4
+.OPTIONS NONLIN CONTINUATION=1
+
+.TRAN 1n 20u UIC
+
+.PRINT TRAN FORMAT=CSV  TIME  V(sn)  V(snb)
+
+.END

@@ -1,0 +1,39 @@
+* ============================================================
+* Dual 3T1C (6T2C) -- Phase 1 (Pre-charge) only -- die4
+*
+* VML(0V) --M2(gate=VREAD=3V)-- mid_L --M1(gate=VCOMP=3V)-- SN --C(100fF)-- GND
+* VML(0V) --M5(gate=VREAD=3V)-- mid_R --M4(gate=VCOMP=3V)-- SN_bar --C(100fF)-- GND
+*
+* VREAD=3V 고정 (Phase1만), VCOMP=3V 고정. SN 초기값은 이전 write의 임의 잔여값 가정 (-1.5V 테스트).
+* 목적: SN이 VML(0V)로 정착하는지, 정착시간이 얼마인지 확인.
+* ============================================================
+
+.TITLE Phase1 dual die4 -- precharge settling
+
+.INCLUDE igzo_die4.sub
+
+VVML    vml   0  DC 0.0
+VVREAD  vreadn 0 DC 3.0
+VVCOMP  vcompn 0 DC 3.0
+
+* 왼쪽 브랜치
+XM2  vml    vreadn  midL  IGZO_DIE4
+XM1  midL   vcompn  sn    IGZO_DIE4
+CSN  sn     0  100f  IC=-1.5
+
+* 오른쪽 브랜치 (대칭)
+XM5  vml    vreadn  midR  IGZO_DIE4
+XM4  midR   vcompn  snb   IGZO_DIE4
+CSNB snb    0  100f  IC=-1.5
+
+RLEAK_L  sn   0  10T
+RLEAK_R  snb  0  10T
+
+.OPTIONS TIMEINT METHOD=TRAP ABSTOL=1e-14 RELTOL=1e-4
+.OPTIONS NONLIN CONTINUATION=1
+
+.TRAN 1n 2u UIC
+
+.PRINT TRAN FORMAT=CSV  TIME  V(sn)  V(snb)  V(midL)  V(midR)
+
+.END

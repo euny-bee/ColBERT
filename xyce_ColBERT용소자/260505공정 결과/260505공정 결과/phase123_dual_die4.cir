@@ -1,0 +1,62 @@
+* ============================================================
+* Dual 3T1C (6T2C) -- Phase1(precharge) -> Phase2(store) -> Phase3(search) -- die4
+* V1=1.0V로 통일, Vth=0.151V(die4 nominal) 고정, V2(query)를 스윕해서
+*   V(SN) = V2-V1+Vth,  I(M0) proportional to (V2-V1)  검증
+*
+* t1 = 0.2us  : Phase1(precharge) -> Phase2(store) 전환
+* t2 = 10000us(10ms) : Phase2(store) -> Phase3(search) 전환 (Phase2 충분히 정착 후)
+*
+* Phase1: VCOMP=3V,  VREAD=3V,  bitline=0(중립)
+* Phase2: VCOMP=3V,  VREAD=-3V, bitline=∓V1(1.0V)
+* Phase3: VCOMP=-3V, VREAD=3V,  bitline(now VDD)=+1.7V,  SN에 +V2 커플링(SNB엔 -V2)
+* ============================================================
+
+.TITLE Phase1-2-3 dual die4 -- V2 sweep check
+
+.INCLUDE igzo_die4.sub
+
+.PARAM V2val = -1.0
+.STEP V2val LIST 1.0 0.75 0.5 0.25 0.0 -0.25 -0.5 -0.75 -1.0
+
+VVML    vml    0  DC 0.0
+VVCOMP  vcompn 0  PWL(0 3.0  10000u 3.0  10000.1u -3.0  2000000u -3.0)
+VVREAD  vreadn 0  PWL(0 3.0  0.2u 3.0  0.3u -3.0  10000u -3.0  10000.1u 3.0  2000000u 3.0)
+
+* bitline: Phase1(중립,0V) -> Phase2(mp1.0V, V1=1.0V) -> Phase3(VDD=1.7V, 양쪽 다)
+VBL_L   vbl_l  0  PWL(0 0.0  0.2u 0.0  0.3u -1.0  10000u -1.0  10000.1u 1.7  2000000u 1.7)
+VBL_R   vbl_r  0  PWL(0 0.0  0.2u 0.0  0.3u  1.0  10000u  1.0  10000.1u 1.7  2000000u 1.7)
+
+* Query 커플링 소스: Phase3 진입 전(t2)까지 0V, 이후 V2val 스텝.
+VV2P    v2p    0  PWL(0 0.0  10000u 0.0  10000.1u {V2val}  2000000u {V2val})
+VV2N    v2n    0  PWL(0 0.0  10000u 0.0  10000.1u {-V2val}  2000000u {-V2val})
+
+* 커플링 커패시터 (C_couple >> C_SN=100fF 로 ~100% 반영 근사, 10pF)
+CCPL_L  v2p  sn   10p
+CCPL_R  v2n  snb  10p
+
+* 왼쪽 브랜치
+XM2  vml    vreadn  midL  IGZO_DIE4  PARAMS: V0=0.1510
+XM1  midL   vcompn  sn    IGZO_DIE4  PARAMS: V0=0.1510
+XM0  midL   sn      vbl_l IGZO_DIE4  PARAMS: V0=0.1510
+CSN  sn     0  100f  IC=-1.5
+
+* 오른쪽 브랜치 (대칭)
+XM5  vml    vreadn  midR  IGZO_DIE4  PARAMS: V0=0.1510
+XM4  midR   vcompn  snb   IGZO_DIE4  PARAMS: V0=0.1510
+XM3  midR   snb     vbl_r IGZO_DIE4  PARAMS: V0=0.1510
+CSNB snb    0  100f  IC=-1.5
+
+RLEAK_L   sn    0  10G
+RLEAK_R   snb   0  10G
+RMID_L    midL  0  10G
+RMID_R    midR  0  10G
+
+.OPTIONS TIMEINT METHOD=TRAP ABSTOL=1e-14 RELTOL=1e-4
+.OPTIONS NONLIN CONTINUATION=1
+
+.TRAN 1n 2000000u UIC
+
+.PRINT TRAN FORMAT=CSV  TIME  V(sn)  V(snb)  V(midL)  V(midR)  V(vcompn)  V(vreadn)  V(vbl_l)  V(vbl_r)  V(v2p)  V(v2n)
++ I(XM0:BIGZO)  I(XM3:BIGZO)  I(VVCOMP)  I(VVREAD)  I(VBL_L)  I(VBL_R)  I(VV2P)  I(VV2N)
+
+.END

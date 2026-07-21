@@ -7,7 +7,7 @@ print('collection pid 수집 중...')
 t0 = time.time()
 collection_pids = set()
 pid2idx = {}
-with open(r'D:\msmarco\collection_1m_fair.tsv', 'r', encoding='utf-8') as f:
+with open(r'D:\msmarco\collection_1m.tsv', 'r', encoding='utf-8') as f:
     for idx, line in enumerate(f):
         pid = int(line.split('\t')[0])
         collection_pids.add(pid)
