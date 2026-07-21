@@ -102,10 +102,10 @@ fig_r2.savefig(r2_out, dpi=300, bbox_inches='tight', transparent=True)
 plt.close(fig_r2)
 print(f"저장: {r2_out}")
 
-fig_leg, ax_leg = plt.subplots(figsize=(4.6, 0.9))
+fig_leg, ax_leg = plt.subplots(figsize=(6.2, 0.9))
 ax_leg.axis('off')
 ax_leg.legend(handles=[
-    mlines.Line2D([], [], color=C3['optA'], marker='o', ms=7, ls='None', label='Vth Comp'),
+    mlines.Line2D([], [], color=C3['optA'], marker='o', ms=7, ls='None', label='Vth Comp (this work)'),
     mlines.Line2D([], [], color=C3['optC'], marker='D', ms=6, ls='None', label='No Comp'),
     mlines.Line2D([], [], color='black', ls='--', lw=0.8, alpha=0.5, label='y = x'),
 ], fontsize=13, loc='center', ncol=3, frameon=False)

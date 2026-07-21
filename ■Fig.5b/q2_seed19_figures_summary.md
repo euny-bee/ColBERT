@@ -76,6 +76,19 @@ candidate **집합** 자체의 일치도(순위 무관). 예: Jaccard(Dig↔A) =
 ### scatter (`plot_seed19_q2_r2.py`)
 - 세로 배치 + 흰 배경 + 검은 테두리 범례(`q2_scatter_r2_legend_vertical_boxed.png`) 추가
 
+### scatter 색상 변형본 (`plot_seed19_q2_r2_1565C0.py`, 2026-07-14 ~ 07-21)
+- `plot_seed19_q2_r2.py`를 복제한 별도 스크립트. 원본 파일/출력은 그대로 두고, Vth comp(Option A) 계열 색상만
+  `#2196F3` → `#1565C0`(TOPSW 분석의 "this work" 파랑과 통일)로 교체, 출력 파일명에 `_1565C0` suffix를 붙여 저장
+  (`[newq_margin_seed19]q2_scatter_r2_1565C0.png`, `..._textbox_1565C0.png`, `..._legend_1565C0.png`,
+  `..._legend_vertical_boxed_1565C0.png`)
+- 세로 배치 박스형 범례(`..._legend_vertical_boxed_1565C0.png`)의 "Vth comp" 라벨을 **"Vth comp\n(this work)"**
+  로 수정 (마커는 첫 줄에 정렬). `■Fig.5b` 폴더에도 최신본을 복사해둠 — 스크립트 자체의 저장 경로(`OUT_BASE`)는
+  `centroidset_vector 크기 조절\06_newq_margin`이라, 재실행할 때마다 그 폴더에 저장된 파일을 `■Fig.5b`로
+  다시 복사해야 함
+- 가로 배치 범례(`..._legend_1565C0.png`, ncol=3)도 동일하게 "Vth Comp (this work)"로 통일 (라벨만 세로형과
+  대소문자 표기 차이 있음: 세로형은 "Vth comp", 가로형은 "Vth Comp" — 각 스크립트 원래 표기를 그대로 유지).
+  라벨 길이 때문에 그림 폭을 4.6in → 6.2in로 확대
+
 ### Table (`plot_table_optC_owncandidate_v2.py` / `_v3.py`)
 - v2는 원본 그대로 유지 (Vth Shift Range / Coarse Search / Cand. Recall)
 - v3를 새로 만들어 "각 항목 첫 글자만 대문자, 나머지 소문자"로 변경 (Vth shift range / Coarse search / Cand. recall / Vth compensation / No compensation / PBS-invariant baseline / Under PBS-induced Vth variation)
